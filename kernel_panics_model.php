@@ -39,9 +39,6 @@ class Kernel_panics_model extends \Model
         if (! $data) {
             echo ("Error Processing kernel_panics module: No data found");
         } else { 
-            
-            // Delete previous entries
-            $this->deleteWhere('serial_number=?', $this->serial_number);
 
             // Process incoming kernel_panics.plist
             $parser = new CFPropertyList();
@@ -58,7 +55,10 @@ class Kernel_panics_model extends \Model
                         $this->$item = $panic_file[$item];
                     }
                 }
-                
+
+                // Delete previous entries with matching serial number, UUID, file name, and timestamp to prevent duplicates
+                $this->deleteWhere('serial_number=? AND anonymous_uuid=? AND crash_file=? AND date=?', array($this->serial_number, $this->anonymous_uuid, $this->crash_file, $this->date));
+
                 // Save the data, save the colonel!!
                 $this->id = '';
                 $this->save(); 
