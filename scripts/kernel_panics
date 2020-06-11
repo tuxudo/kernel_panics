@@ -112,7 +112,7 @@ def process_kernel_panics(panics):
                                 if not loaded_inter.startswith('com.apple.'):
                                     loaded_kexts = loaded_kexts + loaded_inter + "\n"
                                 else:
-                                    loaded_kexts = ""
+                                    loaded_kexts = loaded_kexts
                         except:
                             pass
 
@@ -217,16 +217,6 @@ class FixedOffset(tzinfo):
     
 def main():
     """Main"""
-    # Create cache dir if it does not exist
-    cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
-    if not os.path.exists(cachedir):
-        os.makedirs(cachedir)
-
-    # Skip manual check
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'manualcheck':
-            print 'Manual check: skipping'
-            exit(0)
 
     # Set the encoding
     reload(sys)
@@ -236,6 +226,7 @@ def main():
     result = process_kernel_panics(get_kernel_panics())+process_gpu_panics(get_gpu_panics())+process_ibridge_panics(get_ibridge_panics())
 
     # Write panic results to cache
+    cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
     output_plist = os.path.join(cachedir, 'kernel_panics.plist')
     FoundationPlist.writePlist(result, output_plist)
 #    print FoundationPlist.writePlistToString(result)
