@@ -60,64 +60,91 @@ def process_kernel_panics(panics):
             with open(panic) as panic_file:
                 panic_entry = {"anonymous_uuid":str(uuid.uuid1()).upper(),"type":"Kernel Panic"}
 
-                for i, item in enumerate(panic_file):
-                    file = open(panic, 'r')
-                    panic_entry['full_text'] = file.read().strip()
-                    file.close()
+                file = open(panic, 'r')
+                panic_entry['full_text'] = file.read().strip()
+                file.close()
 
-                    panic_entry['crash_file'] = panic.replace("/Library/Logs/DiagnosticReports/", "")
+                panic_entry['crash_file'] = panic.replace("/Library/Logs/DiagnosticReports/", "")
+                # Process JSON based kernel panics
+                if '"timestamp":"' in panic_entry['full_text']:
 
-                    # Get the date       
-                    try:
-                        if i == 2:
-                            date_str = item.strip()
-                            dt_utc = datetime.strptime(date_str.strip(), "%a %b %d %H:%M:%S %Y")
-                            panic_entry['date'] = int((dt_utc - datetime(1970, 1, 1)).total_seconds())
-                    except:
-                        pass
+                    panic_json = "["+panic_entry['full_text'].replace("}\n{", "},{").replace(">!", "")+"]"
+                    panic_json = json.loads(panic_json)
 
-                    if "Anonymous UUID:" in item:
-                        panic_entry['anonymous_uuid'] = item.replace("Anonymous UUID:", "").strip()
-                    elif item.startswith('panic(cpu '):
-                        panic_entry['caller'] = item.split('): ')[1].replace('"', "").strip()
-                    elif "BSD process name corresponding to current thread:" in item:
-                        panic_entry['process_name'] = item.replace("BSD process name corresponding to current thread:", "").strip()
-                    elif "Mac OS version:" in item:
-                        panic_entry['macos_version'] = next(panic_file).strip()
-                    elif "Kernel version:" in item:
-                        panic_entry['kernel_version'] = next(panic_file).strip()
-                    elif "System model name:" in item:
-                        panic_entry['model_id'] = item.replace("System model name:", "").strip()
-                    elif "Kernel Extensions in backtrace:" in item:
-                        extension_inter = next(panic_file).strip()
-                        extensions = extension_inter + "\n"
+                    panic_entry['full_text'] = panic_json[1]['macOSPanicString']
+
+                    connected = str(panic_json[0]['timestamp'])                    
+                    date_str, tz = connected[:-5], connected[-5:]
+                    dt_utc = datetime.strptime(date_str.strip(), "%Y-%m-%d %H:%M:%S.%f")
+                    dt = dt_utc.replace(tzinfo=FixedOffset(tz))
+                    utc_naive = dt.replace(tzinfo=None) - dt.utcoffset()
+                    panic_entry['date'] = int((utc_naive - datetime(1970, 1, 1)).total_seconds())
+  
+                    panic_file = iter(panic_entry['full_text'].split('\n'))
+                    for item in panic_file:
+                        if item.startswith('panic(cpu '):
+                            panic_entry['caller'] = item.split('): ')[1].replace('"', "").strip()
+                        elif "BSD process name corresponding to current thread:" in item:
+                            panic_entry['process_name'] = item.replace("BSD process name corresponding to current thread:", "").strip()
+                        elif "Mac OS version:" in item:
+                            panic_entry['macos_version'] = next(panic_file).strip()
+                        elif "Kernel version:" in item:
+                            panic_entry['kernel_version'] = next(panic_file).strip()
+                        elif "System model name:" in item:
+                            panic_entry['model_id'] = item.replace("System model name:", "").strip()
+                else:
+                    for i, item in enumerate(panic_file):
+                        # Get the date       
                         try:
-                            while extension_inter is not "":
-                                extension_inter = next(panic_file).strip()
-                                extensions = extensions + "   " + extension_inter + "\n"
-                        except:
-                            pass
-                        panic_entry['extensions_backtrace'] = extensions.strip()
-                    elif "loaded kexts:" in item:
-                        loaded_inter = next(panic_file).strip()
-                        if not loaded_inter.startswith('com.apple.'):
-                            loaded_kexts = loaded_inter + "\n"
-                        else:
-                            loaded_kexts = ""
-
-                        try:
-                            while loaded_inter is not "" or false:
-                                loaded_inter = next(panic_file).strip()
-
-                                if not loaded_inter.startswith('com.apple.'):
-                                    loaded_kexts = loaded_kexts + loaded_inter + "\n"
-                                else:
-                                    loaded_kexts = loaded_kexts
+                            if i == 2:
+                                date_str = item.strip()
+                                dt_utc = datetime.strptime(date_str.strip(), "%a %b %d %H:%M:%S %Y")
+                                panic_entry['date'] = int((dt_utc - datetime(1970, 1, 1)).total_seconds())
                         except:
                             pass
 
-                        if loaded_kexts is not "":
-                            panic_entry['non_apple_loaded_kexts'] = loaded_kexts.strip()
+                        if "Anonymous UUID:" in item:
+                            panic_entry['anonymous_uuid'] = item.replace("Anonymous UUID:", "").strip()
+                        elif item.startswith('panic(cpu '):
+                            panic_entry['caller'] = item.split('): ')[1].replace('"', "").strip()
+                        elif "BSD process name corresponding to current thread:" in item:
+                            panic_entry['process_name'] = item.replace("BSD process name corresponding to current thread:", "").strip()
+                        elif "Mac OS version:" in item:
+                            panic_entry['macos_version'] = next(panic_file).strip()
+                        elif "Kernel version:" in item:
+                            panic_entry['kernel_version'] = next(panic_file).strip()
+                        elif "System model name:" in item:
+                            panic_entry['model_id'] = item.replace("System model name:", "").strip()
+                        elif "Kernel Extensions in backtrace:" in item:
+                            extension_inter = next(panic_file).strip()
+                            extensions = extension_inter + "\n"
+                            try:
+                                while extension_inter is not "":
+                                    extension_inter = next(panic_file).strip()
+                                    extensions = extensions + "   " + extension_inter + "\n"
+                            except:
+                                pass
+                            panic_entry['extensions_backtrace'] = extensions.strip()
+                        elif "loaded kexts:" in item:
+                            loaded_inter = next(panic_file).strip()
+                            if not loaded_inter.startswith('com.apple.'):
+                                loaded_kexts = loaded_inter + "\n"
+                            else:
+                                loaded_kexts = ""
+
+                            try:
+                                while loaded_inter is not "" or false:
+                                    loaded_inter = next(panic_file).strip()
+
+                                    if not loaded_inter.startswith('com.apple.'):
+                                        loaded_kexts = loaded_kexts + loaded_inter + "\n"
+                                    else:
+                                        loaded_kexts = loaded_kexts
+                            except:
+                                pass
+
+                            if loaded_kexts is not "":
+                                panic_entry['non_apple_loaded_kexts'] = loaded_kexts.strip()
 
                 out.append(panic_entry)
         except:

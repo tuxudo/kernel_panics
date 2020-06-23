@@ -21,7 +21,7 @@ class Kernel_panics_model extends \Model
         $this->rs['model_id'] = '';
         $this->rs['extensions_backtrace'] = '';
         $this->rs['non_apple_loaded_kexts'] = '';
-        
+
 		$this->serial_number = $serial;
     }
 
@@ -55,9 +55,11 @@ class Kernel_panics_model extends \Model
                         $this->$item = $panic_file[$item];
                     }
                 }
+                
+                var_dump($this->process_name);
 
-                // Delete previous entries with matching serial number, UUID, file name, and timestamp to prevent duplicates
-                $this->deleteWhere('serial_number=? AND anonymous_uuid=? AND crash_file=? AND date=?', array($this->serial_number, $this->anonymous_uuid, $this->crash_file, $this->date));
+                // Delete previous entries with matching serial number, file name, and timestamp to prevent duplicates
+                $this->deleteWhere('serial_number=? AND crash_file=? AND date=?', array($this->serial_number, $this->crash_file, $this->date));
 
                 // Save the data, save the colonel!!
                 $this->id = '';
