@@ -20,7 +20,7 @@ def get_kernel_panics():
 
     # Get Kernel Panics
     for file in os.listdir("/Library/Logs/DiagnosticReports"):
-        if file.startswith("Kernel_") and file.endswith(".panic"):
+        if file.startswith("Kernel_") and file.endswith(".panic") and os.path.getsize("/Library/Logs/DiagnosticReports/"+file) > 0:
             panics = panics + "/Library/Logs/DiagnosticReports/" + file + "\n"
 
     return panics[:-1]
@@ -31,7 +31,7 @@ def get_gpu_panics():
 
     # Get GPU Panics
     for file in os.listdir("/Library/Logs/DiagnosticReports"):
-        if file.startswith("Kernel_") and file.endswith(".gpuRestart"):
+        if file.startswith("Kernel_") and file.endswith(".gpuRestart") and os.path.getsize("/Library/Logs/DiagnosticReports/"+file) > 0:
             panics = panics + "/Library/Logs/DiagnosticReports/" + file + "\n"
 
     return panics[:-1]
@@ -43,7 +43,7 @@ def get_ibridge_panics():
     # Get iBridge Panics
     if os.path.isdir('/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge'):
         for file in os.listdir("/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge"):
-            if (file.startswith("panic-full-") and file.endswith(".ips")) or (file.startswith("iBridge-panic") and file.endswith(".bridge")):
+            if (file.startswith("panic-full-") and file.endswith(".ips")) or (file.startswith("iBridge-panic") and file.endswith(".bridge")) and os.path.getsize("/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge/"+file) > 0:
                 panics = panics + "/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge/" + file + "\n"
         return panics[:-1]
     else:
