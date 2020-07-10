@@ -45,6 +45,7 @@ def get_ibridge_panics():
         for file in os.listdir("/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge"):
             if (file.startswith("panic-full-") and file.endswith(".ips")) or (file.startswith("iBridge-panic") and file.endswith(".bridge")) and os.path.getsize("/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge/"+file) > 0:
                 panics = panics + "/Library/Logs/DiagnosticReports/ProxiedDevice-Bridge/" + file + "\n"
+                
         return panics[:-1]
     else:
         return ""
@@ -201,16 +202,17 @@ def process_ibridge_panics(panics):
             panic = file.read().strip()
             file.close()
 
-            panic_entry['full_text'] = panic
             panic = "["+panic.replace("}\n{", "},{")+"]"
-            panic = json.loads(panic)
+            panic = json.loads(panic)   
 
+            panic_entry['full_text'] = panic[1]['macOSPanicString']
             panic_entry['anonymous_uuid'] = panic[1]['incident']
             panic_entry['caller'] = panic[0]['caused_by']
             panic_entry['process_name'] = panic[0]['macos_system_state']
             panic_entry['macos_version'] = panic[1]['build']
             panic_entry['kernel_version'] = panic[1]['kernel']
-
+            panic_entry['model_id'] = panic[1]['product']
+            
             connected = str(panic[1]['date'])                    
             date_str, tz = connected[:-5], connected[-5:]
             dt_utc = datetime.strptime(date_str.strip(), "%Y-%m-%d %H:%M:%S.%f")
