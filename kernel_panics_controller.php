@@ -33,12 +33,8 @@ class Kernel_panics_controller extends Module_controller
     **/
     public function get_panic_log($anonymous_uuid = '')
     {
-        $obj = new View();
-
-        if (! $this->authorized()) {
-            $obj->view('json', array('msg' => 'Not authorized'));
-            return;
-        }
+        // Remove non-uuid number characters
+        $anonymous_uuid = preg_replace("/[^A-Za-z0-9_\-]]/", '', $anonymous_uuid);
 
         $sql = "SELECT `full_text`
                         FROM kernel_panics
@@ -57,20 +53,15 @@ class Kernel_panics_controller extends Module_controller
     **/
     public function get_tab_data($serial_number = '')
     {
-        $obj = new View();
-
-        if (! $this->authorized()) {
-            $obj->view('json', array('msg' => 'Not authorized'));
-            return;
-        }
+        // Remove non-serial number characters
+        $serial_number = preg_replace("/[^A-Za-z0-9_\-]]/", '', $serial_number);
 
         $sql = "SELECT `anonymous_uuid`, `type`, `crash_file`, `process_name`, `date`, `caller`, `macos_version`, `kernel_version`, `model_id`, `extensions_backtrace`, `non_apple_loaded_kexts`, `full_text`
-                        FROM kernel_panics
-                        WHERE serial_number = '$serial_number'
-                        ORDER BY `date` DESC";
-
-        $queryobj = new Kernel_panics_model();
-        $kernel_panics_tab = $queryobj->query($sql);
-        $obj->view('json', array('msg' => current(array('msg' => $kernel_panics_tab)))); 
+            FROM kernel_panics
+            WHERE serial_number = '$serial_number'
+            ORDER BY `date` DESC";
+        
+        $queryobj = new Kernel_panics_model;
+        jsonView($queryobj->query($sql)); 
     }
 } // End class Kernel_panics_controller

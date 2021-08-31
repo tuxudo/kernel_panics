@@ -50,6 +50,19 @@ def get_ibridge_panics():
     else:
         return ""
 
+def get_as_panics():
+
+    panics = ""
+
+    # Get Apple Silicon Panics
+    if os.path.isdir('/Library/Logs/DiagnosticReports'):
+        for file in os.listdir("/Library/Logs/DiagnosticReports"):
+            if file.startswith("panic-full-") and file.endswith(".panic") and os.path.getsize("/Library/Logs/DiagnosticReports/"+file) > 0 and not file.endswith(".contents.panic"):
+                panics = panics + "/Library/Logs/DiagnosticReports/" + file + "\n"
+        return panics[:-1]
+    else:
+        return ""
+
 def process_kernel_panics(panics):
 
     if panics == "":
@@ -225,6 +238,49 @@ def process_ibridge_panics(panics):
             continue
     return out
 
+def process_as_panics(panics):
+
+    if panics == "":
+        return []
+
+    out = []
+
+    for panic in panics.split('\n'):
+        try:
+            panic_entry = {"anonymous_uuid":str(uuid.uuid1()).upper(),"type":"Kernel Panic"}
+            panic_entry['crash_file'] = panic.replace("/Library/Logs/DiagnosticReports/", "")
+
+            file = open(panic, 'r')
+            panic = file.read().strip()
+            file.close()
+
+            panic_entry['full_text'] = panic
+            panic = "["+panic.replace("}\n{", "},{")+"]"
+            panic = json.loads(panic)
+
+            panic_entry['anonymous_uuid'] = panic[1]['incident']
+            panic_entry['macos_version'] = panic[1]['build']
+            panic_entry['kernel_version'] = panic[1]['kernel']
+            panic_entry['model_id'] =  panic[1]['product']
+
+            for item in panic[1]['panicString'].split('\n'):
+                if item.startswith('panic(cpu '):
+                    panic_entry['caller'] = item.split('): ')[1].replace('"', "").strip()
+                elif "Panicked task " in item:
+                    panic_entry['process_name'] = item.replace("Panicked task ", "").strip().split(' ')[-1]
+
+            connected = str(panic[1]['date'])                    
+            date_str, tz = connected[:-5], connected[-5:]
+            dt_utc = datetime.strptime(date_str.strip(), "%Y-%m-%d %H:%M:%S.%f")
+            dt = dt_utc.replace(tzinfo=FixedOffset(tz))
+            utc_naive = dt.replace(tzinfo=None) - dt.utcoffset()
+            panic_entry['date'] = int((utc_naive - datetime(1970, 1, 1)).total_seconds())
+
+            out.append(panic_entry)
+        except:
+            continue
+    return out
+
 class FixedOffset(tzinfo):
     """offset_str: Fixed offset in str: e.g. '-0400'"""
     def __init__(self, offset_str):
@@ -252,13 +308,13 @@ def main():
     sys.setdefaultencoding('utf8')
 
     # Get panics
-    result = process_kernel_panics(get_kernel_panics())+process_gpu_panics(get_gpu_panics())+process_ibridge_panics(get_ibridge_panics())
+    result = process_kernel_panics(get_kernel_panics())+process_gpu_panics(get_gpu_panics())+process_ibridge_panics(get_ibridge_panics())+process_as_panics(get_as_panics())
 
     # Write panic results to cache
     cachedir = '%s/cache' % os.path.dirname(os.path.realpath(__file__))
     output_plist = os.path.join(cachedir, 'kernel_panics.plist')
     FoundationPlist.writePlist(result, output_plist)
-#    print FoundationPlist.writePlistToString(result)
+    # print FoundationPlist.writePlistToString(result)
 
 if __name__ == "__main__":
     main()

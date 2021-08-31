@@ -1,0 +1,9 @@
+client_tabs:
+    kernel_panics-tab:
+        view: kernel_panics_tab
+        i18n: kernel_panics.kernel_panics
+        badge: kernel_panics-cnt
+listings:
+    kernel_panics:
+        view: kernel_panics_listing
+        i18n: kernel_panics.kernel_panics
