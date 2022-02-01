@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/munkireport/munkireport-python2
 # Made by Tuxudo for MunkiReport
 
 import os
