@@ -1,4 +1,4 @@
-#!/usr/local/munkireport/munkireport-python2
+#!/usr/local/munki/munki-python
 # Made by Tuxudo for MunkiReport
 
 import os
@@ -9,6 +9,7 @@ import glob
 import json
 import uuid
 from datetime import datetime, timedelta, tzinfo
+
 sys.path.insert(0, '/usr/local/munki')
 sys.path.insert(0, '/usr/local/munkireport')
 
@@ -133,7 +134,7 @@ def process_kernel_panics(panics):
                             extension_inter = next(panic_file).strip()
                             extensions = extension_inter + "\n"
                             try:
-                                while extension_inter is not "":
+                                while extension_inter != "":
                                     extension_inter = next(panic_file).strip()
                                     extensions = extensions + "   " + extension_inter + "\n"
                             except:
@@ -147,7 +148,7 @@ def process_kernel_panics(panics):
                                 loaded_kexts = ""
 
                             try:
-                                while loaded_inter is not "" or false:
+                                while loaded_inter != "" or false:
                                     loaded_inter = next(panic_file).strip()
 
                                     if not loaded_inter.startswith('com.apple.'):
@@ -157,7 +158,7 @@ def process_kernel_panics(panics):
                             except:
                                 pass
 
-                            if loaded_kexts is not "":
+                            if loaded_kexts != "":
                                 panic_entry['non_apple_loaded_kexts'] = loaded_kexts.strip()
 
                 out.append(panic_entry)
@@ -302,10 +303,6 @@ class FixedOffset(tzinfo):
     
 def main():
     """Main"""
-
-    # Set the encoding
-    reload(sys)
-    sys.setdefaultencoding('utf8')
 
     # Get panics
     result = process_kernel_panics(get_kernel_panics())+process_gpu_panics(get_gpu_panics())+process_ibridge_panics(get_ibridge_panics())+process_as_panics(get_as_panics())
