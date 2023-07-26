@@ -1,15 +1,8 @@
 <?php $this->view('partials/head'); ?>
 
-<?php
-// Initialize models needed for the table
-new Machine_model;
-new Reportdata_model;
-new Kernel_panics_model;
-?>
-
 <div class="container-fluid">
   <div class="row pt-4">
-  	<div class="col-lg-12">
+  	<div class="col">
 	<h3><span data-i18n="kernel_panics.report"></span> <span id="total-count" class='badge badge-primary'>…</span></h3>
 		  <table class="table table-striped table-condensed table-bordered">
 		    <thead>
@@ -99,7 +92,7 @@ new Kernel_panics_model;
 	        	var colvar=$('td:eq(8)', nRow).html();
 	        	var panic_file=$('td:eq(2)', nRow).html();
 	        	var uuid=$('td:eq(9)', nRow).html();
-	        	$('td:eq(8)', nRow).html('<button onclick="viewPanic(\''+uuid+'\',\''+panic_file+'\')" class="btn btn-info btn-xs" style="min-width: 100px;" >'+i18n.t('kernel_panics.view')+'</button>')
+	        	$('td:eq(8)', nRow).html('<button onclick="viewPanic(\''+uuid+'\',\''+panic_file+'\')" class="btn btn-info btn-sm" style="min-width: 100px;" >'+i18n.t('kernel_panics.view')+'</button>')
             }
 	    } );
         
