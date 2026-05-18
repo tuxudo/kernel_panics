@@ -58,7 +58,9 @@ class Kernel_panics_controller extends Module_controller
 
         $sql = "SELECT `anonymous_uuid`, `type`, `crash_file`, `process_name`, `date`, `caller`, `macos_version`, `kernel_version`, `model_id`, `extensions_backtrace`, `non_apple_loaded_kexts`, `full_text`
             FROM kernel_panics
-            WHERE serial_number = '$serial_number'
+            LEFT JOIN reportdata USING (serial_number)
+            ".get_machine_group_filter()."
+            AND serial_number = '$serial_number'"
             ORDER BY `date` DESC";
         
         $queryobj = new Kernel_panics_model;
