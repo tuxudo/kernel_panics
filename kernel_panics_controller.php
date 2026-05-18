@@ -60,7 +60,7 @@ class Kernel_panics_controller extends Module_controller
             FROM kernel_panics
             LEFT JOIN reportdata USING (serial_number)
             ".get_machine_group_filter()."
-            AND serial_number = '$serial_number'"
+            AND serial_number = '$serial_number'
             ORDER BY `date` DESC";
         
         $queryobj = new Kernel_panics_model;
