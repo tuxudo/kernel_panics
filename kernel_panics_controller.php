@@ -34,7 +34,7 @@ class Kernel_panics_controller extends Module_controller
     public function get_panic_log($anonymous_uuid = '')
     {
         // Remove non-uuid number characters
-        $anonymous_uuid = preg_replace("/[^A-Za-z0-9_\-]]/", '', $anonymous_uuid);
+        $anonymous_uuid = preg_replace("/[^A-Za-z0-9_\-]/", '', $anonymous_uuid);
 
         $sql = "SELECT `full_text`
                         FROM kernel_panics
@@ -54,7 +54,7 @@ class Kernel_panics_controller extends Module_controller
     public function get_tab_data($serial_number = '')
     {
         // Remove non-serial number characters
-        $serial_number = preg_replace("/[^A-Za-z0-9_\-]]/", '', $serial_number);
+        $serial_number = preg_replace("/[^A-Za-z0-9_\-]/", '', $serial_number);
 
         $sql = "SELECT `anonymous_uuid`, `type`, `crash_file`, `process_name`, `date`, `caller`, `macos_version`, `kernel_version`, `model_id`, `extensions_backtrace`, `non_apple_loaded_kexts`, `full_text`
             FROM kernel_panics
